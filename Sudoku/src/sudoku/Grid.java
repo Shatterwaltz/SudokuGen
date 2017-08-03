@@ -30,9 +30,6 @@ public class Grid {
         //Remove numbers from the solved puzzle while retaining
         //solvability. 
         removeNumbers();
-        System.out.println(pencilGrid[0][0].length());
-        printPencil();
-        printGrid();
     }
     
     public int[][] getGrid(){
@@ -41,15 +38,22 @@ public class Grid {
     
     public void printGrid(){
         for(int i=0;i<9;i++){
+            System.out.println(" _ _ _ _ _ _ _ _ _ ");
             for(int j=0;j<9;j++){
-                System.out.print(grid[i][j]);
+                System.out.print("|");
+                if(grid[i][j]==0){
+                    System.out.print(" ");
+                }else{
+                    System.out.print(grid[i][j]);
+                }
+                
             }
             System.out.println("");
         }
         System.out.println("\n");
     }
     
-    public void printPencil(){
+  /*  public void printPencil(){
         for(int i=0;i<9;i++){
             for(int j=0;j<9;j++){
                 System.out.print("|"+pencilGrid[i][j]+"|");
@@ -57,7 +61,7 @@ public class Grid {
             System.out.println("");
         }
         System.out.println("\n");
-    }
+    }*/
     
     //Recursively generate random numbers for each space in grid. 
     //If a generated number breaks one of the rules of sudoku,
@@ -95,16 +99,81 @@ public class Grid {
        return valid;
    }
     
-    //Remove numbers from grid, while still retaining
+    //Remove numbers from grid in an S pattern, while still retaining
     //solvability
     private void removeNumbers(){
-        
+        int i=0;
+        int direction=1;
+        for(int j=0;j<9;j++){
+            while(i<9&&i>=0){
+                int tmp=grid[i][j];
+                grid[i][j]=0;
+                if(hasSolution(i,j,tmp)){
+                    grid[i][j]=tmp;
+                }else{
+                    printGrid();
+                }
+                i+=direction;
+            }
+            direction*=-1;
+            i+=direction;
+        }
+        printGrid();
+    }
+    
+    //Test board to see if has a one solution, with the exception of 
+    //one that uses the value passed in through "exclude"
+    //Pass in a zero to exclude nothing.
+    //This is used when testing solvability after removing numbers to 
+    //avoid finding the original solution. 
+    //If a solution is found, it immediately returns, because that solution
+    //is not unique. 
+    private boolean hasSolution(int x, int y, int exclude){
+        if(grid[x][y]!=0){
+            if(x==8){
+                if(y==8){
+                    return true;
+                }else{
+                    return hasSolution(0, y+1, 0);
+                }
+            }else{
+                return hasSolution(x+1, y, 0);
+            }
+        }else{
+            int tmp = grid[x][y];
+            for(int i=1;i<9;i++){
+                if(i!=exclude){
+                    grid[x][y]=i;
+                    if(checkRow(y)&&checkColumn(x)&&checkBlock(x, y)){
+                        if(x==8){
+                            if(y==8){
+                                grid[x][y]=tmp;
+                                return true;
+                            }else{
+                                if(hasSolution(0, y+1, 0)){
+                                    grid[x][y]=tmp;
+                                    return true;
+                                }
+                            }
+                        }else{
+                            if(hasSolution(x+1, y, 0)){
+                                grid[x][y]=tmp;
+                                return true;
+                            }
+                        }
+                    }
+                    
+                }
+            }
+            grid[x][y]=tmp;
+            return false;
+        }
     }
     
     //Updates the pencilled in grid. 
     //Pencilled in numbers are a list of every possible number
     //that could fit in a given space.
-    private void updatePencil(){
+  /*  private void updatePencil(){
         for(int i=0;i<9;i++){
             for(int j=0;j<9;j++){
                 pencilGrid[i][j]="";
@@ -119,7 +188,7 @@ public class Grid {
                 }
             }
         }
-    }
+    } */
     //Check column 0-8 for inconsistencies.
     //False means invalid
     private boolean checkColumn(int column){
