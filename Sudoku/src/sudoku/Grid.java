@@ -95,32 +95,10 @@ public class Grid {
        return valid;
    }
     
-    //A step is considered logically solvable if there is at least
-    //one space on the board that only has a single possible(valid)
-    //entry.
+    //Remove numbers from grid, while still retaining
+    //solvability
     private void removeNumbers(){
-        boolean solvable=true;
-        while(solvable){
-            printGrid();
-            solvable=false;
-            int x=rand.nextInt(9);
-            int y=rand.nextInt(9);
-            int tmp=grid[x][y];
-            grid[x][y]=0;
-            
-            updatePencil();
-            for(int i=0;i<9;i++){
-                for(int j=0;j<9;j++){
-                    if(pencilGrid[i][j].length()==1){
-                        solvable=true;
-                    }
-                }
-            }
-            if(!solvable){
-                grid[x][y]=tmp;
-            }
-            
-        }
+        
     }
     
     //Updates the pencilled in grid. 
