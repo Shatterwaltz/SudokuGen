@@ -11,18 +11,24 @@ import java.util.Random;
  * @author shatterwaltz
  */
 public class Grid {
+    //Stores Sudoku board
     private int[][] grid = new int[9][9];
+    //Stores data for "pencilled in" numbers
     private String[][] pencilGrid = new String[9][9];
     Random rand = new Random();
     
     public Grid(){
+        //Build a solved sudoku grid
         generateGrid(0,0);
         printGrid();
+        //Generate pencilled in grid
         for(int i=0;i<9;i++){
             for(int j=0;j<9;j++){
                 pencilGrid[i][j]="";
             }
         }
+        //Remove numbers from the solved puzzle while retaining
+        //solvability. 
         removeNumbers();
         System.out.println(pencilGrid[0][0].length());
         printPencil();
@@ -53,6 +59,11 @@ public class Grid {
         System.out.println("\n");
     }
     
+    //Recursively generate random numbers for each space in grid. 
+    //If a generated number breaks one of the rules of sudoku,
+    //generate a different number in its place. If no numbers
+    //are valid, then steps back and regenerates other parts
+    //of the board until complete. 
    private boolean generateGrid(int x, int y){
        LinkedList<Integer> choices = new LinkedList<>();
        for(int i=1;i<=9;i++){
@@ -84,7 +95,9 @@ public class Grid {
        return valid;
    }
     
-    
+    //A step is considered logically solvable if there is at least
+    //one space on the board that only has a single possible(valid)
+    //entry.
     private void removeNumbers(){
         boolean solvable=true;
         while(solvable){
@@ -110,6 +123,9 @@ public class Grid {
         }
     }
     
+    //Updates the pencilled in grid. 
+    //Pencilled in numbers are a list of every possible number
+    //that could fit in a given space.
     private void updatePencil(){
         for(int i=0;i<9;i++){
             for(int j=0;j<9;j++){
