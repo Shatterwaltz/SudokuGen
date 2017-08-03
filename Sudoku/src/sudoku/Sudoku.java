@@ -14,10 +14,10 @@ public class Sudoku {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
-        // TODO code application logic here
+    public static void main(String[] args) {      
         Grid gridGen = new Grid();
-        int[][] grid = gridGen.getGrid();
+        Grid.printGrid(gridGen.getGrid());
+        Grid.printGrid(gridGen.getSolution());
     }
     
 }

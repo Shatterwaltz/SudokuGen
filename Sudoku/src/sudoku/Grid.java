@@ -13,30 +13,35 @@ import java.util.Random;
 public class Grid {
     //Stores Sudoku board
     private int[][] grid = new int[9][9];
-    //Stores data for "pencilled in" numbers
-    private String[][] pencilGrid = new String[9][9];
+    private int[][] solution=new int[9][9];
     Random rand = new Random();
     
     public Grid(){
-        //Build a solved sudoku grid
-        generateGrid(0,0);
-        printGrid();
-        //Generate pencilled in grid
-        for(int i=0;i<9;i++){
-            for(int j=0;j<9;j++){
-                pencilGrid[i][j]="";
+        do{
+            //Build a solved sudoku grid
+            generateGrid(0,0);
+            //Save the completed grid as solution
+            for(int i=0;i<9;i++){
+                for(int j=0;j<9;j++){
+                    solution[i][j]=grid[i][j];
+                }
             }
-        }
-        //Remove numbers from the solved puzzle while retaining
-        //solvability. 
-        removeNumbers();
+            //Removes numbers while maintaining solvability. 
+            removeNumbers();
+        //Keep looping if, for some reason, puzzle was unsolvable. 
+        }while(!hasSolution(0,0,new Triple(0,0,0)));
+        
     }
     
     public int[][] getGrid(){
         return grid;
     }
     
-    public void printGrid(){
+    public int[][] getSolution(){
+        return solution;
+    }
+    
+    public static void printGrid(int[][] grid){
         for(int i=0;i<9;i++){
             System.out.println(" _ _ _ _ _ _ _ _ _ ");
             for(int j=0;j<9;j++){
@@ -53,15 +58,6 @@ public class Grid {
         System.out.println("\n");
     }
     
-  /*  public void printPencil(){
-        for(int i=0;i<9;i++){
-            for(int j=0;j<9;j++){
-                System.out.print("|"+pencilGrid[i][j]+"|");
-            }
-            System.out.println("");
-        }
-        System.out.println("\n");
-    }*/
     
     //Recursively generate random numbers for each space in grid. 
     //If a generated number breaks one of the rules of sudoku,
@@ -108,87 +104,75 @@ public class Grid {
             while(i<9&&i>=0){
                 int tmp=grid[i][j];
                 grid[i][j]=0;
-                if(hasSolution(i,j,tmp)){
+                if(hasSolution(0,0, new Triple(i,j,tmp))){
                     grid[i][j]=tmp;
-                }else{
-                    printGrid();
                 }
                 i+=direction;
             }
             direction*=-1;
             i+=direction;
         }
-        printGrid();
     }
     
-    //Test board to see if has a one solution, with the exception of 
-    //one that uses the value passed in through "exclude"
-    //Pass in a zero to exclude nothing.
-    //This is used when testing solvability after removing numbers to 
-    //avoid finding the original solution. 
-    //If a solution is found, it immediately returns, because that solution
-    //is not unique. 
-    private boolean hasSolution(int x, int y, int exclude){
+    //Test board to see if has unique solution.
+    //LastRemoved stores the x/y coordinates and value of the 
+    //tile we most recently removed. 
+    //This is used so that we do not find that solution, and instead
+    //return if we find any other solution. 
+    private boolean hasSolution(int x, int y, Triple lastRemoved){
+        //Just move on if this tile isn't empty
         if(grid[x][y]!=0){
             if(x==8){
                 if(y==8){
+                    //If it's the final tile, we must have a solution
                     return true;
                 }else{
-                    return hasSolution(0, y+1, 0);
+                    //end of row, move on.
+                    return hasSolution(0, y+1, lastRemoved);
                 }
             }else{
-                return hasSolution(x+1, y, 0);
+                //next tile in row.
+                return hasSolution(x+1, y, lastRemoved);
             }
         }else{
-            int tmp = grid[x][y];
-            for(int i=1;i<9;i++){
-                if(i!=exclude){
-                    grid[x][y]=i;
-                    if(checkRow(y)&&checkColumn(x)&&checkBlock(x, y)){
-                        if(x==8){
-                            if(y==8){
-                                grid[x][y]=tmp;
-                                return true;
+            //If this tile isn't a given, start plugging values in. 
+            for(int i=1;i<=9;i++){
+                    //First, make sure this isn't the solution we already know exists. 
+                    if(x!=lastRemoved.getL()||y!=lastRemoved.getM()||i!=lastRemoved.getR()){
+                        //Plug in current number
+                        grid[x][y]=i;
+                        //See if it passes checks
+                        if(checkRow(y)&&checkColumn(x)&&checkBlock(x, y)){
+                            //If it does, try rest of puzzle with this number
+                            if(x==8){
+                                if(y==8){
+                                    //If we're at the end of the puzzle, since it
+                                    //passed the checks, this must be a 
+                                    //solution.
+                                    grid[x][y]=0;
+                                    return true;
+                                }else{
+                                    //Otherwise, check rest of puzzle. 
+                                    if(hasSolution(0, y+1, lastRemoved)){
+                                        grid[x][y]=0;
+                                        return true;
+                                    }
+                                }
                             }else{
-                                if(hasSolution(0, y+1, 0)){
-                                    grid[x][y]=tmp;
+                                if(hasSolution(x+1, y, lastRemoved)){
+                                    grid[x][y]=0;
                                     return true;
                                 }
                             }
-                        }else{
-                            if(hasSolution(x+1, y, 0)){
-                                grid[x][y]=tmp;
-                                return true;
-                            }
                         }
-                    }
-                    
                 }
             }
-            grid[x][y]=tmp;
+            grid[x][y]=0;
+            //could not find a solution
             return false;
         }
     }
     
-    //Updates the pencilled in grid. 
-    //Pencilled in numbers are a list of every possible number
-    //that could fit in a given space.
-  /*  private void updatePencil(){
-        for(int i=0;i<9;i++){
-            for(int j=0;j<9;j++){
-                pencilGrid[i][j]="";
-                if(grid[i][j]==0){
-                    for(int k=1;k<=9;k++){
-                        grid[i][j]=k;
-                        if(checkRow(j)&&checkColumn(i)&&checkBlock(i,j)){
-                            pencilGrid[i][j]+=k;
-                        }
-                    }
-                    grid[i][j]=0;
-                }
-            }
-        }
-    } */
     //Check column 0-8 for inconsistencies.
     //False means invalid
     private boolean checkColumn(int column){
@@ -253,4 +237,19 @@ public class Grid {
         return true;
     }
     
+}
+
+class Triple{
+    int l;
+    int m;
+    int r;
+    public Triple(int l, int m, int r){
+        this.l=l;
+        this.m=m;
+        this.r=r;
+    }
+    
+    public int getL(){return l;}
+    public int getM(){return m;}
+    public int getR(){return r;}
 }
